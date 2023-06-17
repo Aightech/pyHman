@@ -1,5 +1,7 @@
 # pyHman
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Release](https://img.shields.io/github/v/release/Aightech/pyHman)](https://github.com/Aightech/pyHman/releases/tag/1.0.0)
+
 
 This is a Python library for controlling and communicating with the Hman device. This library provides high-level interfaces to set and get various parameters of hman, such as motor positions, modes, currents, and so on.
 
