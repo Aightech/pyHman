@@ -110,7 +110,8 @@ class Hman:
         self._cmd[1] = 0xff
         logging.debug('Setting values to %s', PID)
         for i in range(3):
-            self._cmd[2 + i * 4 : 2 + (i + 1) * 4] = struct.pack('<i', PID[i])
+            v = int(PID[i]*1000000)
+            self._cmd[2 + i * 4 : 2 + (i + 1) * 4] = struct.pack('<i', v)
         self._client.sendall(self._cmd)
         
 
@@ -204,7 +205,7 @@ if __name__ == '__main__':
     hman.connect('192.168.127.250')
     #set the motors in articular position
 
-    hman.setPID([5,1,5])
+    hman.setPID([0.005,0.0000,0.005])
 
     sp = [4000,4000,0]
     T = 1
