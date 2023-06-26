@@ -1,6 +1,7 @@
 import socket
 import logging
 import struct
+import time
 
 class Hman:
     """Class to communicate with the hman.
@@ -44,14 +45,14 @@ class Hman:
     def __del__(self):
         """Destructor."""
         self.disconnect()
-        logging.info('Disconnected.')
     
     def disconnect(self):
         """Disconnect from the hman."""
-        self.turn_off_current()
         if self._client:
+            self.turn_off_current()
             self._client.close()
-        logging.info('Disconnected.')
+            self._client = None
+            logging.info('Disconnected.')
 
     def connect(self, address, port=5000):
         """Connect to the hman.
@@ -63,7 +64,7 @@ class Hman:
         logging.info('Connecting to %s:%d...', self.address, self.port)
         self._client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            self._client.connect((address, self.HMAN_PORT))
+            self._client.connect((address, self.port))
         except socket.error as exc:
             logging.error(f'Caught exception socket.error : {exc}')
 
@@ -78,7 +79,7 @@ class Hman:
         logging.info('Setting mode to %s', mode)
         self.mode = mode
         self._cmd[0] = ord('M')
-        self._cmd[2:6] = struct.pack('>i', self.modes[mode])
+        self._cmd[2:6] = struct.pack('<i', self.modes[mode])
         self._client.sendall(self._cmd)
 
     def __set_values(self, val, n):
@@ -90,19 +91,27 @@ class Hman:
             list: List of encoder positions.
         """
         self._cmd[0] = ord('V')
-        self._cmd[1] = self.nb_mot
+        self._cmd[1] = 0xff
         logging.debug('Setting values to %s', val)
-
+        n=2
         for i in range(n):
-            self._cmd[2 + i * 4 : 2 + (i + 1) * 4] = struct.pack('>i', val[i])
+            self._cmd[2 + i * 4 : 2 + (i + 1) * 4] = struct.pack('<i', val[i])
         self._client.sendall(self._cmd)
         # wait for the response
         data = self._client.recv(self.nb_mot * 4)
         if not data:
             logging.error('No data received.')
             return
-        self.positions = [struct.unpack('>i', data[i*4 : (i+1)*4])[0] for i in range(self.nb_mot)]#encoder positions
+        self.positions = [struct.unpack('<i', data[i*4 : (i+1)*4])[0] for i in range(self.nb_mot)]#encoder positions
         return self.positions
+    
+    def setPID(self, PID):
+        self._cmd[0] = ord('K')
+        self._cmd[1] = 0xff
+        logging.debug('Setting values to %s', PID)
+        for i in range(3):
+            self._cmd[2 + i * 4 : 2 + (i + 1) * 4] = struct.pack('<i', PID[i])
+        self._client.sendall(self._cmd)
         
 
     def set_cartesian_pos(self, posx, posy, posz):
@@ -121,7 +130,7 @@ class Hman:
         self.target_positions = pos
         self.__set_values(pos, 3)
         #transform the cartesian articular position to cartesian position
-        return [(self.positions[0] + self.positions[1]) / 2, (-self.positions[0] + self.positions[1]) / 2, self.positions[2]]
+        return [(self.positions[0] + self.positions[1]) / 2, (-self.positions[0] + self.positions[1]) / 2]
 
     def set_articular_pos(self, pos1, pos2, pos3):
         """Set the articular position of the hman.
@@ -154,7 +163,7 @@ class Hman:
 
         curr = [cur1, cur2, cur3]
         self.target_currents = curr
-        self.__set_values(curr, 3)
+        self.__set_values(curr, 2)
         return self.positions
 
     def turn_off_current(self):
@@ -176,16 +185,47 @@ class Hman:
         self._client.sendall(self._cmd)
 
         response = self._client.recv(self.nb_mot * 4)
-        self.positions = [struct.unpack('>i', response[i*4 : (i+1)*4])[0] for i in range(self.nb_mot)]#encoder positions
+        self.positions = [struct.unpack('<i', response[i*4 : (i+1)*4])[0] for i in range(self.nb_mot)]#encoder positions
         return self.positions
+    
+    def home(self):
+        logging.info('Homing')
+        self._cmd[0] = ord('H')
+        self._cmd[1] = 0xff
+        self._client.sendall(self._cmd)
+        # read the response until 1 byte is received
+        self._client.recv(1)
+        print('homing')
 
 if __name__ == '__main__':
     #create a hman object
-    hman = Hman(3, True)
+    hman = Hman(2, True)
     #connect to the hman
-    hman.connect('127.0.0.1')
-    #set the motors in position mode
-    hman.set_mode('position')
+    hman.connect('192.168.127.250')
     #set the motors in articular position
-    pos = hman.set_articular_pos(0, 40, 30)
-    print(pos)
+
+    hman.setPID([5,1,5])
+
+    sp = [4000,4000,0]
+    T = 1
+    nb_step=2000
+    dt=T/nb_step
+
+    hman.home()
+
+    for i in range(nb_step):
+        pos = hman.set_cartesian_pos(int(sp[0]*i/nb_step),int(sp[1]*i/nb_step),int(sp[2]*i/nb_step))
+        print(pos)
+        time.sleep(dt)
+
+    for i in range(nb_step,0,-1):
+        pos = hman.set_cartesian_pos(int(sp[0]*i/nb_step),int(sp[1]*i/nb_step),int(sp[2]*i/nb_step))
+        print(pos)
+        time.sleep(dt)
+    
+    #pos = hman.set_motors_current(1000,1000,1000)
+    # print(pos)
+
+    time.sleep(3)
+
+    hman.disconnect()
