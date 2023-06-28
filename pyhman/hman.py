@@ -205,7 +205,9 @@ if __name__ == '__main__':
     hman.connect('192.168.127.250')
     #set the motors in articular position
 
-    hman.setPID([0.005,0.0000,0.005])
+
+
+    hman.setPID([0.005,0.0000,0.005])#set the PID at Kp=0.005, Ki=0.0000, Kd=0.005
 
     sp = [4000,4000,0]
     T = 1
