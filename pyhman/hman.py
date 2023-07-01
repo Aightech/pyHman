@@ -20,7 +20,7 @@ class Hman:
     def __init__(self, nb_mot, verbose):
         self.nb_mot = nb_mot
         self.verbose = verbose
-        self._pkgSize = 2 + nb_mot * 8
+        self._pkgSize = 2 + 3 * 8
         self.mode = None
         self._cmd = bytearray(self._pkgSize)
         self._client = None
@@ -93,7 +93,6 @@ class Hman:
         self._cmd[0] = ord('V')
         self._cmd[1] = 0xff
         logging.debug('Setting values to %s', val)
-        n=2
         for i in range(n):
             self._cmd[2 + i * 4 : 2 + (i + 1) * 4] = struct.pack('<i', val[i])
         self._client.sendall(self._cmd)
@@ -207,21 +206,21 @@ if __name__ == '__main__':
 
 
 
-    hman.setPID([0.005,0.0000,0.005])#set the PID at Kp=0.005, Ki=0.0000, Kd=0.005
+    hman.setPID([0.001,0.0000,0])#set the PID at Kp=0.005, Ki=0.0000, Kd=0.005
 
-    sp = [4000,4000,0]
-    T = 1
-    nb_step=2000
+    sp = [4000,4000,180]
+    T = 5
+    nb_step=1
     dt=T/nb_step
 
     hman.home()
 
-    for i in range(nb_step):
+    for i in range(1,nb_step,1):
         pos = hman.set_cartesian_pos(int(sp[0]*i/nb_step),int(sp[1]*i/nb_step),int(sp[2]*i/nb_step))
         print(pos)
         time.sleep(dt)
 
-    for i in range(nb_step,0,-1):
+    for i in range(nb_step,-1,-1):
         pos = hman.set_cartesian_pos(int(sp[0]*i/nb_step),int(sp[1]*i/nb_step),int(sp[2]*i/nb_step))
         print(pos)
         time.sleep(dt)
