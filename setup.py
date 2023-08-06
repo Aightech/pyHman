@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 setup(
     name='pyhman',
     packages=find_packages(include=['pyhman']),
-    version='0.1.0',
+    version='0.2.0',
     description='My first Python library',
     author='Alexis Devillard',
     license='MIT',

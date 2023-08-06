@@ -7,6 +7,7 @@ def test_communication():
     #start the server
     server.start()
     #create a hman object
+    hman = hman.Hman()
     hman = hman.Hman(3, True)
     #connect to the hman
     hman.connect('localhost')

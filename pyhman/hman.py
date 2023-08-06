@@ -105,11 +105,28 @@ class Hman:
         return self.positions
     
     def setPID(self, PID):
+        """Set the PID of the hman.
+        Args:
+            PID (list): List of PID values. [P, I, D] 
+        """
         self._cmd[0] = ord('K')
         self._cmd[1] = 0xff
         logging.debug('Setting values to %s', PID)
         for i in range(3):
             v = int(PID[i]*1000000)
+            self._cmd[2 + i * 4 : 2 + (i + 1) * 4] = struct.pack('<i', v)
+        self._client.sendall(self._cmd)
+
+    def set_max_speed(self, speed):
+        """Set the max speed of the hman. Above this speed, the hman will stop.
+        Args:
+            speed (list): List of max speed values. [M1, M2, M3], in turn/1024/5ms
+        """
+        self._cmd[0] = ord('S')
+        self._cmd[1] = 0xff
+        logging.debug('Setting values to %s', speed)
+        for i in range(3):
+            v = int(speed[i])
             self._cmd[2 + i * 4 : 2 + (i + 1) * 4] = struct.pack('<i', v)
         self._client.sendall(self._cmd)
         
@@ -135,8 +152,8 @@ class Hman:
     def set_articular_pos(self, pos1, pos2, pos3):
         """Set the articular position of the hman.
         Args:
-            pos1 (float): Position of the first motor.
-            pos2 (float): Position of the second motor.
+            pos1 (float): Position of the first motor, in increment (A full revolution is 1024).
+            pos2 (float): Position of the second motor, in increment (A full revolution is 1024).
             pos3 (float): Position of the third motor.
         Returns:
             list: List of encoder positions.
@@ -152,8 +169,8 @@ class Hman:
     def set_motors_current(self, cur1, cur2, cur3):
         """Set the current of the motors.
         Args:
-            cur1 (float): Current of the first motor.
-            cur2 (float): Current of the second motor.
+            cur1 (float): Current of the first motor, in pwm (410-3686)
+            cur2 (float): Current of the second motor, in pwm (410-3686)
             cur3 (float): Current of the third motor.
         Returns:
             list: List of encoder positions.
@@ -204,30 +221,35 @@ if __name__ == '__main__':
     hman.connect('192.168.127.250')
     #set the motors in articular position
 
-
-
-    hman.setPID([0.001,0.0000,0])#set the PID at Kp=0.005, Ki=0.0000, Kd=0.005
-
-    sp = [4000,4000,180]
-    T = 5
-    nb_step=1
-    dt=T/nb_step
-
+    hman.setPID([0.007,0.000001,0])#set the PID at Kp=0.005, Ki=0.0000, Kd=0.005
     hman.home()
 
-    for i in range(1,nb_step,1):
+    hman.set_max_speed([100,100,100])
+    hman.setPID([0.0035,0.0,0.00001])#set the PID at Kp=0.005, Ki=0.0000, Kd=0.005
+    sp = [4000,4000,180]
+    T = 5
+    nb_step=100
+    dt=T/nb_step
+
+    print('homed')
+
+    for i in range(1,nb_step+1,1):
         pos = hman.set_cartesian_pos(int(sp[0]*i/nb_step),int(sp[1]*i/nb_step),int(sp[2]*i/nb_step))
         print(pos)
+        print([int(sp[0]*i/nb_step),int(sp[1]*i/nb_step),int(sp[2]*i/nb_step)])
         time.sleep(dt)
+    
+    time.sleep(1)
 
     for i in range(nb_step,-1,-1):
         pos = hman.set_cartesian_pos(int(sp[0]*i/nb_step),int(sp[1]*i/nb_step),int(sp[2]*i/nb_step))
         print(pos)
+        print([int(sp[0]*i/nb_step),int(sp[1]*i/nb_step),int(sp[2]*i/nb_step)])
         time.sleep(dt)
     
     #pos = hman.set_motors_current(1000,1000,1000)
     # print(pos)
 
-    time.sleep(3)
+    time.sleep(1)
 
     hman.disconnect()
