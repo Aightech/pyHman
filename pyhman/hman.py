@@ -17,7 +17,7 @@ class Hman:
         port (int): Port of the hman.
         address (str): IP address of the hman.
     """
-    def __init__(self, nb_mot, verbose):
+    def __init__(self, nb_mot=3, verbose=False):
         self.nb_mot = nb_mot
         self.verbose = verbose
         self._pkgSize = 2 + 3 * 8
@@ -65,6 +65,7 @@ class Hman:
         self._client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self._client.connect((address, self.port))
+            logging.info('Connected.')
         except socket.error as exc:
             logging.error(f'Caught exception socket.error : {exc}')
 

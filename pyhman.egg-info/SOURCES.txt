@@ -1,3 +1,4 @@
+LICENSE
 README.md
 setup.py
 pyhman/__init__.py
@@ -6,4 +7,5 @@ pyhman/hmanserver.py
 pyhman.egg-info/PKG-INFO
 pyhman.egg-info/SOURCES.txt
 pyhman.egg-info/dependency_links.txt
+pyhman.egg-info/requires.txt
 pyhman.egg-info/top_level.txt

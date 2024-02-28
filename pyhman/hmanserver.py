@@ -17,7 +17,7 @@ class HmanServer:
         self.server.bind((self.host, self.port))
         self.server.listen(1)
         logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
-        logging.info('Server started at {self.host}:{self.port}')
+        logging.info('Server started at {self.host}:{self.port}'.format(self=self))
 
     def start(self):
         while True:
